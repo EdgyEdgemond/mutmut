@@ -59,6 +59,7 @@ def test_foo():
    assert f == 3
    assert d == dict(e=f)
    assert g == 2
+   assert h == 2
 '''
 
 
