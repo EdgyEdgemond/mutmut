@@ -330,7 +330,7 @@ from _name import *
 """)
 
 
-def operator_mutation(value, node, context, **_):
+def operator_mutation(value, node, **_):
     if import_from_star_pattern.matches(node=node):
         return
 
