@@ -112,6 +112,8 @@ for x in y:
         ('1j', '2j'),
         ('1.0j', '2.0j'),
         ('0o1', '2'),
+        ('a | b', 'a & b'),
+        ('a & b', 'a | b'),
         ('1.0e10', '20000000000.0'),
         ('1.1e-16', '2.2e-16'),
         ("dict(a=b)", "dict(aXX=b)"),
@@ -125,6 +127,30 @@ for x in y:
 def test_basic_mutations(original, expected):
     actual, number_of_performed_mutations = mutate(Context(source=original, mutation_id=ALL, dict_synonyms=['Struct', 'FooBarDict']))
     assert actual == expected, 'Performed {} mutations for original "{}"'.format(number_of_performed_mutations, original)
+
+
+@pytest.mark.parametrize(
+    'original, expected', [
+        ('var: int | None', []),
+        ('var: int | str | None', []),
+        ('var: str | None = None', ['var: str | None = ""']),
+        ('var: int | str | None = None', ['var: int | str | None = ""']),
+        # # Complicated use case taken from https://github.com/boxed/mutmut/issues/302
+        (
+            'user: User | None = Specification(filter=Equals("email", user.email) | Equals("username", user.username))',
+            [
+                'user: User | None = Specification(filter=Equals("XXemailXX", user.email) | Equals("username", user.username))',
+                'user: User | None = Specification(filter=Equals("email", user.email) & Equals("username", user.username))',
+                'user: User | None = Specification(filter=Equals("email", user.email) | Equals("XXusernameXX", user.username))',
+                'user: User | None = None',
+            ],
+        )
+    ]
+)
+def test_type_hint_unions(original, expected):
+    actual_mutations = [mutate(Context(source=original, mutation_id=mutation))[0]
+                        for mutation in list_mutations(Context(source=original))]
+    assert actual_mutations == expected, 'Performed {} mutations for original "{}"'.format(len(actual_mutations), original)
 
 
 def test_fstring_mutation_fstring_is_mutated_separately_from_other_mutations():

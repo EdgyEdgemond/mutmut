@@ -343,6 +343,9 @@ def operator_mutation(value, node, **_):
     if value in ('*', '**') and node.parent.type in ('argument', 'arglist'):
         return
 
+    if value == "|" and node.parent.type == "expr" and node.parent.get_previous_leaf() == ":":
+        return
+
     return {
         '+': '-',
         '-': '+',
@@ -863,7 +866,7 @@ def tests_pass(config: Config, callback) -> bool:
         return hammett_tests_pass(config, callback)
 
     returncode = popen_streaming_output(config.test_command, callback, timeout=config.baseline_time_elapsed * 10)
-    return returncode != 1
+    return returncode not in (1, 2)
 
 
 def config_from_file(**defaults):
